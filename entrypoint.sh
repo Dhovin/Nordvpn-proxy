@@ -9,7 +9,6 @@ if [ -z "$NORDVPN_TOKEN" ]; then
 fi
 
 # 1. IMMEDIATE HOST-LEVEL FIX
-# Clear any locks from previous crashes before doing anything else
 chattr -i /etc/resolv.conf 2>/dev/null || true
 
 cleanup() {
@@ -24,10 +23,15 @@ COUNTRY=${CONNECT:-Canada}
 GROUP=${GROUP:-""}
 NETWORK=$(echo "${NETWORK:-192.168.0.0/16,172.16.0.0/12,10.0.0.0/8}" | tr -d ' ')
 
-echo "--- NordVPN Docker Startup (v19 - Proactive Unlock) ---"
+echo "--- NordVPN Docker Startup (v22 - Auto-Update Restored) ---"
 
-# 2. DAEMON PREP
-# Ensure clean socket/pid environment
+# 2. AUTO-UPDATE LOGIC
+if [ "$AUTO_UPDATE" = "true" ]; then
+    echo "Checking for NordVPN app updates..."
+    apt-get update && apt-get install -y --only-upgrade nordvpn || echo "Update failed, continuing with current version."
+fi
+
+# 3. DAEMON PREP
 rm -rf /run/nordvpn /var/run/nordvpn 2>/dev/null || true
 mkdir -p /run/nordvpn /var/run/nordvpn 2>/dev/null || true
 
@@ -99,9 +103,6 @@ if [ -z "$VPN_IFACE" ]; then
     exit 1
 fi
 
-# 3. THE MAGIC FIX
-# Now that we are connected, NordVPN has already tried to lock the file.
-# We unlock it IMMEDIATELY so it's safe if we crash.
 echo "Unlocking resolv.conf for host safety..."
 chattr -i /etc/resolv.conf 2>/dev/null || true
 
@@ -116,9 +117,7 @@ echo "System Ready."
 
 # Monitor
 while true; do
-    # Continuously unlock resolv.conf every minute just in case the app relocks it
     chattr -i /etc/resolv.conf 2>/dev/null || true
-    
     if ! ip addr show "$VPN_IFACE" > /dev/null 2>&1; then
         echo "VPN Lost. Reconnecting..."
         if [ -n "$GROUP" ]; then

@@ -1,11 +1,10 @@
 # NordVPN Proxy Docker for Unraid
 
-This Docker container runs the native NordVPN Linux app and provides both HTTP (Privoxy) and SOCKS5 (Dante) proxies. All traffic through these proxies is routed via the VPN.
+This Docker container runs the native NordVPN Linux app and provides both HTTP (Privoxy) and SOCKS5 (Microsocks) proxies. All traffic through these proxies is routed via the VPN.
 
 ## Features
 - **Native NordVPN app**: Supports NordLynx and autoconnect.
 - **Dual Proxy**: HTTP (8118) and SOCKS5 (1080).
-- **Healthcheck**: Docker will report "unhealthy" if the VPN connection drops.
 - **DNS Leak Protection**: Forced usage of NordVPN private DNS.
 - **Connection Logging**: Prints IP and location info to the Docker log on startup.
 - **Auto-Update**: Optionally keeps the NordVPN client up to date.
@@ -52,9 +51,9 @@ If you are using the "Custom App" wizard in TrueNAS SCALE:
    - Add `net.ipv6.conf.all.disable_ipv6=1` if the UI allows it, or use the `AUTO_UPDATE` variable to ensure the script handles it internally.
 
 ## Usage
-- **HTTP Proxy**: Set your browser or app to use `[Unraid-IP]:8118`.
-- **SOCKS5 Proxy**: Set your browser or app to use `[Unraid-IP]:1080`.
+- **HTTP Proxy**: Set your browser or app to use `[Server-IP]:8118`.
+- **SOCKS5 Proxy**: Set your browser or app to use `[Server-IP]:1080`.
 
 ## Notes
 - The container uses `net.ipv6.conf.all.disable_ipv6=1` to prevent IPv6 leaks.
-- Ensure your local network subnet is allowed in `privoxy.config` and `danted.conf` (defaults include 192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8).
+- Local network subnets are managed via the `NETWORK` environment variable to ensure proxy and VPN accessibility.

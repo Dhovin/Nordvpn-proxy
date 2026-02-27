@@ -1,0 +1,60 @@
+# NordVPN Proxy Docker for Unraid
+
+This Docker container runs the native NordVPN Linux app and provides both HTTP (Privoxy) and SOCKS5 (Dante) proxies. All traffic through these proxies is routed via the VPN.
+
+## Features
+- **Native NordVPN app**: Supports NordLynx and autoconnect.
+- **Dual Proxy**: HTTP (8118) and SOCKS5 (1080).
+- **Healthcheck**: Docker will report "unhealthy" if the VPN connection drops.
+- **DNS Leak Protection**: Forced usage of NordVPN private DNS.
+- **Connection Logging**: Prints IP and location info to the Docker log on startup.
+- **Auto-Update**: Optionally keeps the NordVPN client up to date.
+
+## Setup Instructions
+
+### 1. Get a NordVPN Token
+1. Go to your [NordVPN Account dashboard](https://my.nordaccount.com/).
+2. Navigate to **Services > NordVPN**.
+3. Scroll down to **Access Token** and click **Generate new token**.
+4. Choose "Never expire" (or your preferred duration) and copy the token.
+
+### 2. Configuration (Environment Variables)
+- `NORDVPN_TOKEN`: Your NordVPN access token (Required).
+- `CONNECT`: The country to connect to (Default: `Canada`).
+- `NETWORK`: Your local subnet(s) allowed to use the proxy (Default: `192.168.0.0/16,172.16.0.0/12,10.0.0.0/8`).
+- `AUTO_UPDATE`: Set to `true` to update the NordVPN app on startup.
+- `GROUP`: Optional NordVPN group (e.g., `Double_VPN`).
+
+### 3. Running with Docker Compose
+```bash
+docker-compose up -d
+```
+
+### 4. Setup in Unraid
+... (Unraid instructions) ...
+
+### 5. Setup in TrueNAS SCALE (Custom App)
+If you are using the "Custom App" wizard in TrueNAS SCALE:
+1. **Application Name**: `nordvpn-proxy`
+2. **Container Image**: `dhovin/nordvpn-proxy:latest`
+3. **Environment Variables**:
+   - `NORDVPN_TOKEN`: (Your Token)
+   - `CONNECT`: `Canada`
+   - `NETWORK`: (Your home subnet, e.g., `192.168.1.0/24`)
+4. **Networking**:
+   - Add Port Forwarding for `8118` (HTTP) and `1080` (SOCKS5).
+5. **Security Context** (Very Important):
+   - **Privileged Mode**: `Off`
+   - **Add Capabilities**: `NET_ADMIN`
+6. **Storage / Devices**:
+   - Add a "Host Path" for `/dev/net/tun` mapped to `/dev/net/tun` inside the container.
+7. **Sysctls** (Advanced):
+   - Add `net.ipv6.conf.all.disable_ipv6=1` if the UI allows it, or use the `AUTO_UPDATE` variable to ensure the script handles it internally.
+
+## Usage
+- **HTTP Proxy**: Set your browser or app to use `[Unraid-IP]:8118`.
+- **SOCKS5 Proxy**: Set your browser or app to use `[Unraid-IP]:1080`.
+
+## Notes
+- The container uses `net.ipv6.conf.all.disable_ipv6=1` to prevent IPv6 leaks.
+- Ensure your local network subnet is allowed in `privoxy.config` and `danted.conf` (defaults include 192.168.0.0/16, 172.16.0.0/12, and 10.0.0.0/8).

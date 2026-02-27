@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  nordvpn-proxy:
+    image: dhovin/nordvpn-proxy:latest
+    build: .
+    container_name: nordvpn-proxy
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - NORDVPN_TOKEN=your_token_here
+      - CONNECT=Canada
+      - NETWORK=192.168.1.0/24 # Change to your local subnet
+      - AUTO_UPDATE=true
+      # - GROUP=Double_VPN # Optional
+    ports:
+      - "8118:8118" # HTTP Proxy (Privoxy)
+      - "1080:1080" # SOCKS5 Proxy (Microsocks)
+    restart: unless-stopped
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1 # Recommended to prevent IPv6 leaks

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nordvpn-proxy
+  labels:
+    app: nordvpn-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nordvpn-proxy
+  template:
+    metadata:
+      labels:
+        app: nordvpn-proxy
+    spec:
+      containers:
+      - name: nordvpn-proxy
+        image: dhovin/nordvpn-proxy:latest
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        env:
+        - name: NORDVPN_TOKEN
+          value: "YOUR_TOKEN_HERE"
+        - name: CONNECT
+          value: "Canada"
+        - name: NETWORK
+          value: "192.168.1.0/24"
+        ports:
+        - containerPort: 8118
+          name: http-proxy
+        - containerPort: 1080
+          name: socks-proxy
+        volumeMounts:
+        - name: tun-device
+          mountPath: /dev/net/tun
+      volumes:
+      - name: tun-device
+        hostPath:
+          path: /dev/net/tun
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nordvpn-proxy-service
+spec:
+  selector:
+    app: nordvpn-proxy
+  ports:
+    - protocol: TCP
+      port: 8118
+      targetPort: 8118
+      name: http
+    - protocol: TCP
+      port: 1080
+      targetPort: 1080
+      name: socks
+  type: LoadBalancer

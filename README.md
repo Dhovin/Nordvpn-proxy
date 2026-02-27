@@ -30,7 +30,18 @@ docker-compose up -d
 ```
 
 ### 4. Setup in Unraid
-... (Unraid instructions) ...
+If you are adding this manually in Unraid:
+1. **Repository**: `dhovin/nordvpn-proxy:latest`
+2. **Network Type**: `Bridge`
+3. **Privileged**: `Off` (Recommended for better security)
+4. **Extra Parameters**: `--cap-add=NET_ADMIN --sysctl net.ipv6.conf.all.disable_ipv6=1`
+5. **Port 8118**: HTTP Proxy (Host: 8118, Container: 8118)
+6. **Port 1080**: SOCKS5 Proxy (Host: 1080, Container: 1080)
+7. **Variable NORDVPN_TOKEN**: Paste your access token.
+8. **Variable CONNECT**: Set your country (e.g., `Canada`).
+9. **Variable NETWORK**: Set your local subnet (e.g., `192.168.10.0/24`).
+10. **Variable AUTO_UPDATE**: Set to `true` to keep NordVPN current.
+11. **Device**: Map `/dev/net/tun` to `/dev/net/tun`.
 
 ### 5. Setup in TrueNAS SCALE (Custom App)
 If you are using the "Custom App" wizard in TrueNAS SCALE:

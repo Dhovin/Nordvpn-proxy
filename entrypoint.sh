@@ -23,7 +23,7 @@ COUNTRY=${CONNECT:-Canada}
 GROUP=${GROUP:-""}
 NETWORK=$(echo "${NETWORK:-192.168.0.0/16,172.16.0.0/12,10.0.0.0/8}" | tr -d ' ')
 
-echo "--- NordVPN Docker Startup (v22 - Auto-Update Restored) ---"
+echo "--- NordVPN Docker Startup (v23 - SOCKS5 UDP Support) ---"
 
 # 2. AUTO-UPDATE LOGIC
 if [ "$AUTO_UPDATE" = "true" ]; then
@@ -60,11 +60,13 @@ echo "nameserver 103.86.99.100" >> /etc/resolv.conf
 echo "Logging in..."
 nordvpn login --token "$NORDVPN_TOKEN"
 
-echo "Whitelisting local networks..."
+# Whitelisting local networks and ports
 nordvpn whitelist add subnet 127.0.0.1/32 || true
 nordvpn whitelist add subnet 172.16.0.0/12 || true 
 nordvpn whitelist add subnet 192.168.0.0/16 || true
 nordvpn whitelist add subnet 10.0.0.0/8 || true
+nordvpn whitelist add port 1080 || true
+nordvpn whitelist add port 8118 || true
 
 IFS=',' read -ra ADDR <<< "$NETWORK"
 for i in "${ADDR[@]}"; do
@@ -109,9 +111,21 @@ chattr -i /etc/resolv.conf 2>/dev/null || true
 echo "--- VPN Connected ($VPN_IFACE) ---"
 nordvpn status
 
+# Start Proxies
 echo "Starting Proxies..."
 privoxy --no-daemon /etc/privoxy/config &
-microsocks -i 0.0.0.0 -p 1080 &
+
+# Start Gost (SOCKS5 with UDP support)
+echo "Starting SOCKS5 Proxy (Gost) on :1080 (TCP/UDP)..."
+/usr/local/bin/gost -L "socks5://:1080?udp=true" &
+
+# Verify it started
+sleep 5
+if pgrep gost > /dev/null; then
+    echo "SOCKS5 Proxy (Gost) started successfully."
+else
+    echo "ERROR: SOCKS5 Proxy (Gost) failed to start."
+fi
 
 echo "System Ready."
 

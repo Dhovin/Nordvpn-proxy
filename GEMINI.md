@@ -8,11 +8,11 @@ This project provides a Dockerized implementation of the official NordVPN Linux 
 - **Protocols**: NordLynx (WireGuard-based)
 - **Proxies**: 
   - **HTTP**: Privoxy (Port 8118)
-  - **SOCKS5**: Microsocks (Port 1080)
+  - **SOCKS5**: Gost (Port 1080) - High-performance proxy with full TCP/UDP support.
 - **Key Logic**: A robust `entrypoint.sh` script that handles daemon initialization, token-based login, local network whitelisting, and a "Proactive Unlock" mechanism for `resolv.conf`.
 
 ## Key Files
-- `Dockerfile`: Configures the environment, installs dependencies, and sets up the NordVPN repository.
+- `Dockerfile`: Configures the environment, installs dependencies (including Gost), and sets up the NordVPN repository.
 - `entrypoint.sh`: The heart of the container. Manages the lifecycle, fixes DNS locking issues, and monitors the VPN connection.
 - `privoxy.config`: Defines access rules and logging for the HTTP proxy.
 - `docker-compose.yml`: Provides a ready-to-use deployment template.
@@ -33,12 +33,13 @@ docker-compose up -d
 ```
 
 ### Testing
-- **HTTP**: `curl.exe -x http://[HOST_IP]:[PORT] https://ipapi.co/json/`
-- **SOCKS5**: `curl.exe --socks5-hostname [HOST_IP]:[PORT] https://ipapi.co/json/`
+- **HTTP**: `curl.exe -x http://[HOST_IP]:[8118] https://ipapi.co/json/`
+- **SOCKS5**: `curl.exe --socks5-hostname [HOST_IP]:[1080] https://ipapi.co/json/`
 
 ## Development Conventions
-- **Versioning**: Incremental versions are noted in the `entrypoint.sh` startup message (Current: v19).
+- **Versioning**: Incremental versions are noted in the `entrypoint.sh` startup message (Current: v23).
 - **DNS Handling**: Uses a "Proactive Unlock" strategy (`chattr -i /etc/resolv.conf`) to prevent the NordVPN app from permanently locking the host-mapped DNS files.
+- **SOCKS5 Engine**: Powered by Gost for its robust handling of UDP Associate and remote DNS resolution, which are critical for modern web applications and media loading.
 - **Network Visibility**: Relies on the `NETWORK` environment variable to dynamically whitelist local subnets in both the NordVPN firewall and Privoxy.
 - **Permissions**: Requires `privileged: true` and `NET_ADMIN` capabilities to manage network interfaces and iptables.
 

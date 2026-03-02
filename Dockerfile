@@ -9,11 +9,14 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     iptables \
     privoxy \
-    microsocks \
     dos2unix \
     e2fsprogs \
     net-tools \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Gost (SOCKS5 with UDP support)
+RUN wget -qO- https://github.com/ginuerzh/gost/releases/download/v2.11.5/gost-linux-amd64-2.11.5.gz | gunzip > /usr/local/bin/gost \
+    && chmod +x /usr/local/bin/gost
 
 # Install NordVPN
 RUN wget -qO - https://repo.nordvpn.com/gpg/nordvpn_public.asc | gpg --dearmor > /usr/share/keyrings/nordvpn-keyring.gpg \
@@ -30,7 +33,7 @@ RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Privoxy port
 EXPOSE 8118
-# Microsocks (SOCKS5) port
+# SOCKS5 (Gost) port
 EXPOSE 1080
 
 ENTRYPOINT ["/entrypoint.sh"]

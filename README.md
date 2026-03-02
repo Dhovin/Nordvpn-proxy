@@ -1,10 +1,11 @@
 # NordVPN Proxy Docker for Unraid
 
-This Docker container runs the native NordVPN Linux app and provides both HTTP (Privoxy) and SOCKS5 (Microsocks) proxies. All traffic through these proxies is routed via the VPN.
+This Docker container runs the native NordVPN Linux app and provides both HTTP (Privoxy) and SOCKS5 (Gost) proxies. All traffic through these proxies is routed via the VPN.
 
 ## Features
 - **Native NordVPN app**: Supports NordLynx and autoconnect.
 - **Dual Proxy**: HTTP (8118) and SOCKS5 (1080).
+- **SOCKS5 UDP Support**: Uses **Gost** for robust TCP and UDP traffic handling.
 - **DNS Leak Protection**: Forced usage of NordVPN private DNS.
 - **Connection Logging**: Prints IP and location info to the Docker log on startup.
 - **Auto-Update**: Optionally keeps the NordVPN client up to date.
@@ -63,7 +64,9 @@ If you are using the "Custom App" wizard in TrueNAS SCALE:
 
 ## Usage
 - **HTTP Proxy**: Set your browser or app to use `[Server-IP]:8118`.
-- **SOCKS5 Proxy**: Set your browser or app to use `[Server-IP]:1080`.
+- **SOCKS5 Proxy**: 
+  1. Set your browser or app to use `[Server-IP]:1080`.
+  2. **Crucial (Firefox)**: In Settings -> Network Settings, ensure **"Proxy DNS when using SOCKS v5"** is **CHECKED**. This ensures images and media load correctly by preventing DNS mismatches.
 
 ## Notes
 - The container uses `net.ipv6.conf.all.disable_ipv6=1` to prevent IPv6 leaks.

@@ -1,0 +1,5 @@
+{
+    "ServeNodes": [
+        "socks5://:1080?udp=true"
+    ]
+}

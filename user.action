@@ -1,0 +1,26 @@
+{{alias}}
+fragile = -filter -session-cookies-only -crunch-incoming-cookies -crunch-outgoing-cookies
+
+# Tier 1: Infrastructure - Full bypass to prevent 403/Challenges
+{ -filter -session-cookies-only -crunch-incoming-cookies -crunch-outgoing-cookies }
+.mmcdn.com
+.cloudflare.com
+.cloudflare.net
+
+# Tier 2: General CDNs - Use 'fragile' for balance
+{ fragile }
+.cloudfront.net
+.fastly.net
+.akamai.net
+.akamaihd.net
+.akamaized.net
+.edgecastcdn.net
+.msecnd.net
+.aspnetcdn.com
+.gstatic.com
+
+# The following were not in the suggested bypass list:
+# .cloudflareinsights.com
+# .fbcdn.net
+# .googlevideo.com
+# .apple-dns.net

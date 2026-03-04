@@ -1,6 +1,7 @@
 # Docker
 docker-compose.override.yml
 .env
+*.har
 
 # OS files
 .DS_Store

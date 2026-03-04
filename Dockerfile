@@ -27,9 +27,14 @@ RUN wget -qO - https://repo.nordvpn.com/gpg/nordvpn_public.asc | gpg --dearmor >
 # Copy configuration files
 COPY entrypoint.sh /entrypoint.sh
 COPY privoxy.config /etc/privoxy/config
+COPY user.action /etc/privoxy/user.action
+COPY gost.json /etc/gost/gost.json
 
 # Fix Windows line endings and set permissions
 RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
+
+# Config Volume
+VOLUME /config
 
 # Privoxy port
 EXPOSE 8118

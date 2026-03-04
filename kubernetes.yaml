@@ -35,10 +35,15 @@ spec:
         volumeMounts:
         - name: tun-device
           mountPath: /dev/net/tun
+        - name: config-volume
+          mountPath: /config
       volumes:
       - name: tun-device
         hostPath:
           path: /dev/net/tun
+      - name: config-volume
+        hostPath:
+          path: /opt/nordvpn-proxy/config
 ---
 apiVersion: v1
 kind: Service

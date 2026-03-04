@@ -17,7 +17,9 @@ services:
       # - GROUP=Double_VPN # Optional
     ports:
       - "8118:8118" # HTTP Proxy (Privoxy)
-      - "1080:1080" # SOCKS5 Proxy (Microsocks)
+      - "1080:1080" # SOCKS5 Proxy (Gost)
+    volumes:
+      - ./config:/config
     restart: unless-stopped
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1 # Recommended to prevent IPv6 leaks

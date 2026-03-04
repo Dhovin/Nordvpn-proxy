@@ -8,7 +8,11 @@ if [ -z "$NORDVPN_TOKEN" ]; then
     exit 1
 fi
 
-# 1. IMMEDIATE HOST-LEVEL FIX
+# 1. PERMISSIONS & UMASK
+UMASK_SET=${UMASK:-022}
+umask "$UMASK_SET"
+
+# 2. IMMEDIATE HOST-LEVEL FIX
 chattr -i /etc/resolv.conf 2>/dev/null || true
 
 cleanup() {
@@ -23,7 +27,7 @@ COUNTRY=${CONNECT:-Canada}
 GROUP=${GROUP:-""}
 NETWORK=$(echo "${NETWORK:-192.168.0.0/16,172.16.0.0/12,10.0.0.0/8}" | tr -d ' ')
 
-echo "--- NordVPN Docker Startup (v23 - SOCKS5 UDP Support) ---"
+echo "--- NordVPN Docker Startup (v25 - Config Persistence) ---"
 
 # 2. AUTO-UPDATE LOGIC
 if [ "$AUTO_UPDATE" = "true" ]; then
@@ -73,15 +77,50 @@ for i in "${ADDR[@]}"; do
     nordvpn whitelist add subnet "$i" || true
 done
 
-# Configure Privoxy
+# --- CONFIGURATION INITIALIZATION ---
+mkdir -p /config
+
+# Ownership Fix (Optional PUID/PGID for Unraid/Linux permissions)
+if [ -n "$PUID" ] && [ -n "$PGID" ]; then
+    echo "Applying ownership (PUID: $PUID, PGID: $PGID) to /config..."
+    chown -R "$PUID:$PGID" /config
+fi
+
+# Privoxy Seed
+if [ ! -f /config/privoxy.config ]; then
+    echo "Seeding default Privoxy configs..."
+    cp -r /etc/privoxy/* /config/
+    # Rename 'config' to 'privoxy.config' for clarity if it was copied from /etc/privoxy/config
+    if [ -f /config/config ]; then
+        mv /config/config /config/privoxy.config
+    fi
+fi
+
+# Gost Seed
+if [ ! -f /config/gost.json ]; then
+    echo "Seeding default Gost config..."
+    if [ -f /etc/gost/gost.json ]; then
+        cp /etc/gost/gost.json /config/gost.json
+    else
+        cat <<EOF > /config/gost.json
+{
+    "ServeNodes": [
+        "socks5://:1080?udp=true"
+    ]
+}
+EOF
+    fi
+fi
+
+# Configure Privoxy (Applying dynamic network whitelists to the config in /config)
 echo "Configuring Privoxy..."
-sed -i '/^permit-access/d' /etc/privoxy/config
-echo "permit-access 127.0.0.1" >> /etc/privoxy/config
-echo "permit-access 172.16.0.0/12" >> /etc/privoxy/config
-echo "permit-access 10.0.0.0/8" >> /etc/privoxy/config
-echo "permit-access 192.168.0.0/16" >> /etc/privoxy/config
+sed -i '/^permit-access/d' /config/privoxy.config
+echo "permit-access 127.0.0.1" >> /config/privoxy.config
+echo "permit-access 172.16.0.0/12" >> /config/privoxy.config
+echo "permit-access 10.0.0.0/8" >> /config/privoxy.config
+echo "permit-access 192.168.0.0/16" >> /config/privoxy.config
 for i in "${ADDR[@]}"; do
-    echo "permit-access $i" >> /etc/privoxy/config
+    echo "permit-access $i" >> /config/privoxy.config
 done
 
 echo "Connecting to $COUNTRY..."
@@ -113,11 +152,15 @@ nordvpn status
 
 # Start Proxies
 echo "Starting Proxies..."
-privoxy --no-daemon /etc/privoxy/config &
+privoxy --no-daemon /config/privoxy.config &
 
 # Start Gost (SOCKS5 with UDP support)
 echo "Starting SOCKS5 Proxy (Gost) on :1080 (TCP/UDP)..."
-/usr/local/bin/gost -L "socks5://:1080?udp=true" &
+if [ -f /config/gost.json ]; then
+    /usr/local/bin/gost -C /config/gost.json &
+else
+    /usr/local/bin/gost -L "socks5://:1080?udp=true" &
+fi
 
 # Verify it started
 sleep 5

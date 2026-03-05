@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     dos2unix \
     e2fsprogs \
     net-tools \
+    iputils-ping \
+    dbus \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Gost (SOCKS5 with UDP support)
@@ -26,8 +28,7 @@ RUN wget -qO - https://repo.nordvpn.com/gpg/nordvpn_public.asc | gpg --dearmor >
 
 # Copy configuration files
 COPY entrypoint.sh /entrypoint.sh
-COPY privoxy.config /etc/privoxy/config
-COPY user.action /etc/privoxy/user.action
+COPY privoxy/ /etc/privoxy/
 COPY gost.json /etc/gost/gost.json
 
 # Fix Windows line endings and set permissions

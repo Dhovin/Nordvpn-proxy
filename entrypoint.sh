@@ -27,7 +27,7 @@ COUNTRY=${CONNECT:-Canada}
 GROUP=${GROUP:-""}
 NETWORK=$(echo "${NETWORK:-192.168.0.0/16,172.16.0.0/12,10.0.0.0/8}" | tr -d ' ')
 
-echo "--- NordVPN Docker Startup (v25 - Config Persistence) ---"
+echo "--- NordVPN Docker Startup (v26 - Modular Config) ---"
 
 # 2. AUTO-UPDATE LOGIC
 if [ "$AUTO_UPDATE" = "true" ]; then
@@ -87,13 +87,10 @@ if [ -n "$PUID" ] && [ -n "$PGID" ]; then
 fi
 
 # Privoxy Seed
-if [ ! -f /config/privoxy.config ]; then
+if [ ! -f /config/privoxy/config ]; then
     echo "Seeding default Privoxy configs..."
-    cp -r /etc/privoxy/* /config/
-    # Rename 'config' to 'privoxy.config' for clarity if it was copied from /etc/privoxy/config
-    if [ -f /config/config ]; then
-        mv /config/config /config/privoxy.config
-    fi
+    mkdir -p /config/privoxy
+    cp -r /etc/privoxy/* /config/privoxy/
 fi
 
 # Gost Seed
@@ -112,15 +109,15 @@ EOF
     fi
 fi
 
-# Configure Privoxy (Applying dynamic network whitelists to the config in /config)
+# Configure Privoxy (Applying dynamic network whitelists to the config in /config/privoxy)
 echo "Configuring Privoxy..."
-sed -i '/^permit-access/d' /config/privoxy.config
-echo "permit-access 127.0.0.1" >> /config/privoxy.config
-echo "permit-access 172.16.0.0/12" >> /config/privoxy.config
-echo "permit-access 10.0.0.0/8" >> /config/privoxy.config
-echo "permit-access 192.168.0.0/16" >> /config/privoxy.config
+sed -i '/^permit-access/d' /config/privoxy/config
+echo "permit-access 127.0.0.1" >> /config/privoxy/config
+echo "permit-access 172.16.0.0/12" >> /config/privoxy/config
+echo "permit-access 10.0.0.0/8" >> /config/privoxy/config
+echo "permit-access 192.168.0.0/16" >> /config/privoxy/config
 for i in "${ADDR[@]}"; do
-    echo "permit-access $i" >> /config/privoxy.config
+    echo "permit-access $i" >> /config/privoxy/config
 done
 
 echo "Connecting to $COUNTRY..."
@@ -152,7 +149,7 @@ nordvpn status
 
 # Start Proxies
 echo "Starting Proxies..."
-privoxy --no-daemon /config/privoxy.config &
+privoxy --no-daemon /config/privoxy/config &
 
 # Start Gost (SOCKS5 with UDP support)
 echo "Starting SOCKS5 Proxy (Gost) on :1080 (TCP/UDP)..."

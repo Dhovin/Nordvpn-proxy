@@ -27,12 +27,14 @@ COUNTRY=${CONNECT:-Canada}
 GROUP=${GROUP:-""}
 NETWORK=$(echo "${NETWORK:-192.168.0.0/16,172.16.0.0/12,10.0.0.0/8}" | tr -d ' ')
 
-echo "--- NordVPN Docker Startup (v26 - Modular Config) ---"
+echo "--- NordVPN Docker Startup (v27 - Auto-Update Enhanced) ---"
+echo "Installed NordVPN Version: $(nordvpn --version 2>/dev/null || echo 'Unknown')"
 
-# 2. AUTO-UPDATE LOGIC
+# 2. AUTO-UPDATE LOGIC (STARTUP)
 if [ "$AUTO_UPDATE" = "true" ]; then
     echo "Checking for NordVPN app updates..."
-    apt-get update && apt-get install -y --only-upgrade nordvpn || echo "Update failed, continuing with current version."
+    apt-get update && apt-get install -y --only-upgrade --no-install-recommends nordvpn || echo "Update failed, continuing with current version."
+    echo "Current NordVPN Version: $(nordvpn --version 2>/dev/null || echo 'Unknown')"
 fi
 
 # 3. DAEMON PREP
@@ -169,9 +171,38 @@ fi
 
 echo "System Ready."
 
-# Monitor
+# Monitor & Periodic Auto-Update
+AUTO_UPDATE_INTERVAL=${AUTO_UPDATE_INTERVAL:-86400} # Default: 24 hours (86400 seconds)
+LAST_UPDATE_CHECK=$(date +%s)
+
 while true; do
     chattr -i /etc/resolv.conf 2>/dev/null || true
+    
+    # Periodic Runtime Auto-Update Check
+    NOW=$(date +%s)
+    if [ "$AUTO_UPDATE" = "true" ] && [ $((NOW - LAST_UPDATE_CHECK)) -ge $AUTO_UPDATE_INTERVAL ]; then
+        echo "Performing scheduled check for NordVPN updates..."
+        LAST_UPDATE_CHECK=$NOW
+        apt-get update >/dev/null 2>&1
+        UPGRADABLE=$(apt-get --just-print upgrade nordvpn 2>/dev/null | grep -i "Inst nordvpn")
+        if [ -n "$UPGRADABLE" ]; then
+            echo "New NordVPN version detected. Upgrading in background..."
+            nordvpn disconnect 2>/dev/null || true
+            pkill -f nordvpnd 2>/dev/null || true
+            apt-get install -y --only-upgrade --no-install-recommends nordvpn
+            /usr/sbin/nordvpnd &
+            sleep 3
+            if [ -n "$GROUP" ]; then
+                nordvpn connect "$COUNTRY" "$GROUP"
+            else
+                nordvpn connect "$COUNTRY"
+            fi
+            echo "NordVPN successfully upgraded to: $(nordvpn --version 2>/dev/null)"
+        else
+            echo "NordVPN is already up to date."
+        fi
+    fi
+
     if ! ip addr show "$VPN_IFACE" > /dev/null 2>&1; then
         echo "VPN Lost. Reconnecting..."
         if [ -n "$GROUP" ]; then
@@ -182,5 +213,7 @@ while true; do
         sleep 10
         chattr -i /etc/resolv.conf 2>/dev/null || true
     fi
-    sleep 60
+    sleep 60 & wait $!
 done
+
+

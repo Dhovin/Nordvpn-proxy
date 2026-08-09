@@ -40,7 +40,7 @@ docker-compose up -d
 - **SOCKS5**: `curl.exe --socks5-hostname [HOST_IP]:[1080] https://ipapi.co/json/`
 
 ## Development Conventions
-- **Versioning**: Incremental versions are noted in the `entrypoint.sh` startup message (Current: v26).
+- **Versioning**: Incremental versions are noted in the `entrypoint.sh` startup message (Current: v27).
 - **DNS Handling**: Uses a "Proactive Unlock" strategy (`chattr -i /etc/resolv.conf`) to prevent the NordVPN app from permanently locking the host-mapped DNS files.
 
 - **SOCKS5 Engine**: Powered by Gost for its robust handling of UDP Associate and remote DNS resolution, which are critical for modern web applications and media loading.

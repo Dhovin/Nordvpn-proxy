@@ -22,7 +22,8 @@ This Docker container runs the native NordVPN Linux app and provides both HTTP (
 - `NORDVPN_TOKEN`: Your NordVPN access token (Required).
 - `CONNECT`: The country to connect to (Default: `Canada`).
 - `NETWORK`: Your local subnet(s) allowed to use the proxy (Default: `192.168.0.0/16,172.16.0.0/12,10.0.0.0/8`).
-- `AUTO_UPDATE`: Set to `true` to update the NordVPN app on startup.
+- `AUTO_UPDATE`: Set to `true` to enable automatic NordVPN updates (on startup and periodically).
+- `AUTO_UPDATE_INTERVAL`: Interval in seconds between background update checks (Default: `86400` / 24 hours).
 - `GROUP`: Optional NordVPN group (e.g., `Double_VPN`).
 - `PUID`: User ID for file ownership (Unraid default: `99`).
 - `PGID`: Group ID for file ownership (Unraid default: `100`).
